@@ -1,4 +1,4 @@
-name: Release
+name: CI/CD
 on:
   push:
     branches:
@@ -8,8 +8,45 @@ permissions:
   contents: read # for checkout
 
 jobs:
+  build:
+    name: Audit and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit
+
+      - name: Build
+        run: pnpm build # Add the correct build command for your project
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: . # Adjust path to include only built files needed for release and deployment
+
   release:
     name: Release
+    needs: build # Ensures this job runs only after 'build' completes
     environment: release
     runs-on: ubuntu-latest
     permissions:
@@ -18,34 +55,15 @@ jobs:
       pull-requests: write # to comment on released pull requests
       id-token: write # to enable use of OIDC for npm provenance
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v3
         with:
-          fetch-depth: 0
-
-      - name: Setup Node.js and pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          node-version: "20" # unified Node.js version
-          pnpm-version: "9"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Verify integrity of dependencies
-        run: pnpm audit
+          name: build-artifact
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm release
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifact
-          path: . # Adjust path to include only the files necessary for deployment
 
   deploy:
     name: Deploy to Production
@@ -53,10 +71,10 @@ jobs:
     needs: release # Ensures this job runs only after 'release' completes
     environment: production
     steps:
-      - name: Download Artifact
+      - name: Download Build Artifact
         uses: actions/download-artifact@v3
         with:
-          name: artifact
+          name: build-artifact
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
