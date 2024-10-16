@@ -1,0 +1,43 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/changelog",
+    "@semantic-release/git",
+    "@semantic-release/github"
+  ],
+  "tagFormat": "v${version}",
+  "prepare": [
+    "@semantic-release/changelog",
+    {
+      "path": "@semantic-release/exec",
+      "cmd": "npm --no-git-tag-version version ${nextRelease.version}"
+    },
+    {
+      "path": "@semantic-release/git",
+      "message": "chore(release): v${nextRelease.version} \n\n${nextRelease.notes}",
+      "assets": [
+        "package.json",
+        "CHANGELOG.md"
+      ]
+    }
+  ],
+  "generateNotes": [
+    {
+      "path": "@semantic-release/release-notes-generator",
+      "writerOpts": {
+        "groupBy": "type",
+        "commitsSort": [
+          "subject",
+          "scope"
+        ]
+      },
+      "commit": "commits",
+      "tag": "v${nextRelease.version}",
+      "linkCompare": true,
+      "linkReferences": true
+    }
+  ]
+}
