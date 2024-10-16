@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: Audit and Build
+    name: Lint, Audit and Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,11 +26,14 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "pnpm"
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+
+      - name: Lint check
+        run: pnpm lint
 
       - name: Audit dependencies
         run: pnpm audit
@@ -69,8 +72,8 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "pnpm"
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -94,8 +97,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Deploy to Production
         run: |
